@@ -16,6 +16,45 @@ PLATFORM_MAPPING = {
     '12773': 'Br',
     'TBD': 'Las',
 }
+"""
+The following platform id's still need to be implemented in the PLATFORM_MAPPING above ^.
+Open question is what the country codes are for each platform.
+
+platform_id	platform_name
+11732	Amazon > Chile > SVOD > Features > Sony One LATAM
+11733	Amazon > Chile > SVOD > Series > Sony One LATAM
+11734	Amazon > Colombia > SVOD > Features > Sony One LATAM
+11735	Amazon > Colombia > SVOD > Series > Sony One LATAM
+11736	Amazon > Mexico > SVOD > Features > Sony One LATAM
+11737	Amazon > Mexico > SVOD > Series > Sony One LATAM
+11738	Amazon > Brazil > SVOD > Features > Sony One LATAM
+11739	Amazon > Brazil > SVOD > Series > Sony One LATAM
+12382	App > SouthernCone > SVOD > Features_Series > Sony One LATAM
+12383	App > Brazil > SVOD > Features_Series > Sony One LATAM
+12384	App > NorthernCone > SVOD > Features_Series > Sony One LATAM
+12386	Affiliates > SouthernCone > SVOD > Features_Series > Sony One LATAM
+12387	Affiliates > Brazil > SVOD > Features_Series > Sony One LATAM
+12388	Affiliates > NorthernCone > SVOD > Features_Series > Sony One LATAM
+12745	App > SouthernCone > FVOD > Features_Series > Sony One LATAM
+12746	App > Brazil > FVOD > Features_Series > Sony One LATAM
+12747	App > Andean > SVOD > Features_Series > Sony One LATAM
+12748	App > Andean > FVOD > Features_Series > Sony One LATAM
+12749	App > NorthernCone > FVOD > Features_Series > Sony One LATAM
+12750	Affiliates > SouthernCone > FVOD > Features_Series > Sony One LATAM
+12751	Affiliates > Brazil > FVOD > Features_Series > Sony One LATAM
+12752	Affiliates > Andean > SVOD > Features_Series > Sony One LATAM
+12753	Affiliates > Andean > FVOD > Features_Series > Sony One LATAM
+12754	Affiliates > NorthernCone > FVOD > Features_Series > Sony One LATAM
+12755	Amazon > Brazil > FVOD > Series > Sony One LATAM
+12756	Amazon > Colombia > FVOD > Series > Sony One LATAM
+12757	Amazon > Chile > FVOD > Series > Sony One LATAM
+12758	Amazon > Mexico > FVOD > Series > Sony One LATAM
+12759	Amazon > Brazil > FVOD > Features > Sony One LATAM
+12760	Amazon > Colombia > FVOD > Features > Sony One LATAM
+12761	Amazon > Chile > FVOD > Features > Sony One LATAM
+12762	Amazon > Mexico > FVOD > Features > Sony One LATAM
+"""
+
 
 RATING_SYSTEM_MAPPING = {
     'mexico_rating_system': 'MX',
@@ -82,6 +121,12 @@ class CoreMetadata:
         self.associated_org = self.get_associated_org()
         self.company_display_credit = self.get_company_display_credit()
 
+    @staticmethod
+    def clean_list_of_strings(some_list):
+        list_without_dupes = list(set(some_list))  # deduplicate the list
+        final_list = [item for item in list_without_dupes if item]  # remove empty strings
+        return final_list
+
     def get_id(self):
         if self.md_type == 'Episode':
             platform_id = self.superset.platform_details.id
@@ -120,9 +165,9 @@ class CoreMetadata:
         localized_info = [
             {
                 'Language': LANGUAGE_MAPPING[language],
-                'TitleDisplays': [items[language].display_name],
-                'Summaries': summaries,
-                'Genres': items[language].genres,
+                'TitleDisplays': CoreMetadata.clean_list_of_strings([items[language].display_name]),
+                'Summaries': CoreMetadata.clean_list_of_strings(summaries),
+                'Genres': CoreMetadata.clean_list_of_strings(items[language].genres),
                 'CopyrightLine': self.superset.general_details.copyright_owners,
             }
         ]
@@ -231,7 +276,7 @@ class CoreMetadata:
         return {"display_name": f"{LICENSOR}"}
 
     def get_company_display_credit(self):
-        return self.superset.general_details.studios
+        return CoreMetadata.clean_list_of_strings(self.superset.general_details.studios)
 
     def build_json(self):
         return {
@@ -328,8 +373,8 @@ class EpisodeCoreMetadata(CoreMetadata):
 
     def build_json(self):
         res = super().build_json()
-        res['Basic']['SequenceInfo'] = self.sequence_info or None,
-        res['Basic']['RatingSet'] = self.rating_set or None,
+        res['Basic']['SequenceInfo'] = self.sequence_info or None
+        res['Basic']['RatingSet'] = self.rating_set or None
         return res
 
 
@@ -343,7 +388,7 @@ class SeasonCoreMetadata(CoreMetadata):
 
     def build_json(self):
         res = super().build_json()
-        res['Basic']['SequenceInfo'] = self.sequence_info or None,
+        res['Basic']['SequenceInfo'] = self.sequence_info or None
         return res
 
 
